@@ -29,8 +29,12 @@ services:
     image: nginx:latest
     environment:
       - PORT=${PORT}
+      - REQCOUNTER_ADDR=${REQCOUNTER_ADDR}
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./cmd/nginx/nginx.conf:/nginx.conf.template:ro
+      - ./cmd/nginx/entrypoint.sh:/entrypoint.sh
+    entrypoint: ["/entrypoint.sh"]
+    command: ["nginx", "-g", "daemon off;"]
     depends_on:
       - requestcounter
     ports:
