@@ -1,12 +1,5 @@
 build:
-	go build -o cluster cmd/Cluster/main.go
-	go build -o requestcounter cmd/RequestCounter/main.go
+	sudo docker compose build
 
-build-docker:
-	sudo docker build -f cmd/RequestCounter/Dockerfile --tag requestcounter .
-
-run-cluster:
-	./cluster
-
-run-requestcounter:
-	./requestcounter
+run:
+	sudo docker compose up --build
