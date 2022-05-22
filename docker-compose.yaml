@@ -7,7 +7,7 @@ services:
       args:
         - PORT=${PORT}
     environment:
-      - LISTEN_PORT=${PORT}
+      - LISTEN_ADDR=:${PORT}
     expose:
       - ${PORT}
   requestcounter:
@@ -19,7 +19,7 @@ services:
       args:
         - PORT=${PORT}
     environment:
-      - LISTEN_PORT=${PORT}
+      - LISTEN_ADDR=:${PORT}
       - CLUSTER_ADDR=${CLUSTER_ADDR}
     deploy:
       replicas: 3

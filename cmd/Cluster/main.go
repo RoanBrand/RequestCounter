@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	s := http.Server{Addr: ":" + os.Getenv("LISTEN_PORT")}
+	s := http.Server{Addr: os.Getenv("LISTEN_ADDR")}
 	defer s.Close()
 
 	var count uint64

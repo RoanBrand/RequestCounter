@@ -22,7 +22,7 @@ func main() {
 		log.Println("could not resolve hostname:", err.Error())
 	}
 
-	s := http.Server{Addr: ":" + os.Getenv("LISTEN_PORT")}
+	s := http.Server{Addr: os.Getenv("LISTEN_ADDR")}
 	defer s.Close()
 
 	var count uint64
