@@ -14,7 +14,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-const clusterAddr = "http://localhost:8024"
+const clusterAddr = "http://cluster:8084"
 
 var count uint64
 
@@ -24,7 +24,7 @@ func main() {
 		log.Println("could not resolve hostname:", err.Error())
 	}
 
-	s := http.Server{Addr: ":8023"}
+	s := http.Server{Addr: ":8083"}
 	defer s.Close()
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

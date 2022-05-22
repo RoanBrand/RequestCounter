@@ -10,7 +10,7 @@ import (
 var count uint64
 
 func main() {
-	s := http.Server{Addr: ":8024"}
+	s := http.Server{Addr: ":8084"}
 	defer s.Close()
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

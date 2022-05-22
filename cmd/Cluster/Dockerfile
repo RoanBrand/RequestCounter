@@ -9,17 +9,17 @@ COPY go.mod ./
 COPY go.sum ./
 RUN go mod download
 
-COPY cmd/RequestCounter/main.go ./
+COPY cmd/Cluster/main.go ./
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o requestcounter ./main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o cluster ./main.go
 
 # Deploy
 FROM gcr.io/distroless/base-debian11
 
 WORKDIR /
 
-COPY --from=builder ./requestcounter ./requestcounter
+COPY --from=builder ./cluster ./cluster
 
-EXPOSE 8083
+EXPOSE 8084
 
-ENTRYPOINT ["./requestcounter"]
+ENTRYPOINT ["./cluster"]

@@ -1,0 +1,26 @@
+version: "3.9"
+services:
+  cluster:
+    build:
+      dockerfile: cmd/Cluster/Dockerfile
+      context: .
+    ports:
+      - "8084"
+  requestcounter:
+    depends_on:
+      - cluster
+    build:
+      dockerfile: cmd/RequestCounter/Dockerfile
+      context: .
+    deploy:
+      replicas: 3
+    ports:
+      - "8083"
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - requestcounter
+    ports:
+      - "8083:8083"
