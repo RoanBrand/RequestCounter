@@ -16,10 +16,11 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o requestcounter ./main.go
 # Deploy
 FROM gcr.io/distroless/base-debian11
 
+ARG PORT
 WORKDIR /
 
 COPY --from=builder ./requestcounter ./requestcounter
 
-EXPOSE 8083
+EXPOSE ${PORT}
 
 ENTRYPOINT ["./requestcounter"]

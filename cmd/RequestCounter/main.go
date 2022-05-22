@@ -14,9 +14,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-const clusterAddr = "http://cluster:8084"
-
-var count uint64
+var clusterAddr = os.Getenv("CLUSTER_ADDR")
 
 func main() {
 	hostName, err := os.Hostname()
@@ -24,8 +22,10 @@ func main() {
 		log.Println("could not resolve hostname:", err.Error())
 	}
 
-	s := http.Server{Addr: ":8083"}
+	s := http.Server{Addr: ":" + os.Getenv("LISTEN_PORT")}
 	defer s.Close()
+
+	var count uint64
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		newClusterCount, err := requestCluster()
@@ -39,7 +39,7 @@ func main() {
 		newNodeCount := atomic.AddUint64(&count, 1)
 
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		fmt.Fprintf(
+		_, err = fmt.Fprintf(
 			w,
 			"You are talking to instance %s%s.\nThis is request %d to this instance and request %d to the cluster.\n",
 			hostName,
@@ -47,6 +47,9 @@ func main() {
 			newNodeCount,
 			newClusterCount,
 		)
+		if err != nil {
+			log.Println("error sending response:", err)
+		}
 	})
 
 	log.Println(s.ListenAndServe())

@@ -16,10 +16,11 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o cluster ./main.go
 # Deploy
 FROM gcr.io/distroless/base-debian11
 
+ARG PORT
 WORKDIR /
 
 COPY --from=builder ./cluster ./cluster
 
-EXPOSE 8084
+EXPOSE ${PORT}
 
 ENTRYPOINT ["./cluster"]
