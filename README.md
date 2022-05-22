@@ -1,8 +1,8 @@
 # RequestCounter
-Services to handle and count requests
+Services to handle and count requests.
 
 # Run, Build and Development
-- Requires Golang 1.18
+- Requires Golang 1.18, Docker.
 - See `Makefile` useful commands.
 
 ## Cluster
