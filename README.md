@@ -10,6 +10,7 @@ Services to handle and count requests.
 - Single instance service.
 - Counts the number of http requests made to it.
 - Returns current count in a request.
+- Basic async disk persistence.
 
 ## RequestCounter
 - Multi instance service. Currently 3 replicas.

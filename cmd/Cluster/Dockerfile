@@ -3,15 +3,11 @@
 # Build
 FROM registry.semaphoreci.com/golang:1.18 as builder
 
-WORKDIR /
+WORKDIR /app
 
-COPY go.mod ./
-COPY go.sum ./
-RUN go mod download
+COPY . /app
 
-COPY cmd/Cluster/main.go ./
-
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o cluster ./main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o cluster ./cmd/Cluster/main.go
 
 # Deploy
 FROM gcr.io/distroless/base-debian11
@@ -19,7 +15,7 @@ FROM gcr.io/distroless/base-debian11
 ARG PORT
 WORKDIR /
 
-COPY --from=builder ./cluster ./cluster
+COPY --from=builder ./app/cluster ./cluster
 
 EXPOSE ${PORT}
 

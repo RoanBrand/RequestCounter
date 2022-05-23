@@ -8,6 +8,7 @@ services:
         - PORT=${PORT}
     environment:
       - LISTEN_ADDR=:${PORT}
+      - DB_FILE=${DB_FILE}
     expose:
       - ${PORT}
   requestcounter:
