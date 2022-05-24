@@ -22,6 +22,7 @@ services:
     environment:
       - LISTEN_ADDR=:${PORT}
       - CLUSTER_ADDR=${CLUSTER_ADDR}
+      - DB_FILE=${DB_FILE}
     deploy:
       replicas: 3
     expose:

@@ -17,6 +17,7 @@ var data = db.NewDB(os.Getenv("DB_FILE"))
 
 func main() {
 	defer data.Close()
+
 	s := http.Server{Addr: os.Getenv("LISTEN_ADDR")}
 	defer s.Close()
 

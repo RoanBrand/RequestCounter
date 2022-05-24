@@ -21,7 +21,7 @@ func NewDB(dbFilePath string) *db {
 		file:  dbFilePath,
 	}
 
-	// async db saver
+	// async db flusher
 	go func(d *db) {
 		for range d.flush {
 			if err := d.saveCount(); err != nil {
@@ -44,17 +44,35 @@ func (d *db) Close() error {
 
 func (d *db) IncCount() uint64 {
 	newCount := atomic.AddUint64(&d.count, 1)
-	d.saveCountLazy()
+	d.notifyFlusher()
 	return newCount
 }
 
-func (d *db) saveCountLazy() {
+func (d *db) notifyFlusher() {
 	if len(d.flush) == 0 {
 		select {
 		case d.flush <- struct{}{}:
 		default:
 		}
 	}
+}
+
+var lastSave uint64
+
+func (d *db) saveCount() error {
+	c := atomic.LoadUint64(&d.count)
+	if c == lastSave {
+		return nil
+	}
+
+	fb := strconv.FormatUint(c, 10)
+	err := os.WriteFile(d.file, []byte(fb), 0644)
+	if err != nil {
+		return errors.Wrap(err, "unable to save "+d.file)
+	}
+
+	lastSave = c
+	return nil
 }
 
 func (d *db) loadCount() error {
@@ -67,17 +85,10 @@ func (d *db) loadCount() error {
 	}
 
 	if len(fb) > 8 {
-		log.Println(d.file, "corrupted. Ignoring")
+		log.Println(d.file, d.file+" corrupted. Ignoring")
 		return nil
 	}
 
 	d.count, err = strconv.ParseUint(string(fb), 10, 64)
 	return err
-}
-
-func (d *db) saveCount() error {
-	c := atomic.LoadUint64(&d.count)
-	fb := strconv.FormatUint(c, 10)
-
-	return os.WriteFile(d.file, []byte(fb), 0644)
 }

@@ -9,19 +9,24 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
-	"sync/atomic"
 	"syscall"
 	"time"
+
+	"github.com/RoanBrand/RequestCounter/internal/db"
 
 	"github.com/pkg/errors"
 )
 
 var clusterAddr = os.Getenv("CLUSTER_ADDR")
+var data = db.NewDB(os.Getenv("DB_FILE"))
 
 func main() {
+	defer data.Close()
+
 	hostName, err := os.Hostname()
 	if err != nil {
 		log.Println("could not resolve hostname:", err.Error())
+		// continue as not critical
 	}
 
 	s := http.Server{Addr: os.Getenv("LISTEN_ADDR")}
@@ -44,8 +49,6 @@ func main() {
 }
 
 func runServer(s *http.Server, hostName string) error {
-	var count uint64
-
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		newClusterCount, err := requestCluster()
 		if err != nil {
@@ -55,9 +58,9 @@ func runServer(s *http.Server, hostName string) error {
 			return
 		}
 
-		newNodeCount := atomic.AddUint64(&count, 1)
-
+		newNodeCount := data.IncCount()
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+
 		_, err = fmt.Fprintf(
 			w,
 			"You are talking to instance %s%s.\nThis is request %d to this instance and request %d to the cluster.\n",
