@@ -38,9 +38,9 @@ func BenchmarkWithLen(b *testing.B) {
 	fmt.Println()
 	b.ResetTimer()
 
-	go func(b *testing.B, count *uint64, flush chan struct{}) {
+	go func() {
 		for i := 0; i < b.N; i++ {
-			atomic.AddUint64(count, 1)
+			atomic.AddUint64(&count, 1)
 
 			if len(flush) == 0 {
 				select {
@@ -51,7 +51,7 @@ func BenchmarkWithLen(b *testing.B) {
 		}
 
 		close(flush)
-	}(b, &count, flush)
+	}()
 
 	for range flush {
 		newCount := atomic.LoadUint64(&count)
