@@ -7,7 +7,7 @@ WORKDIR /app
 
 COPY . ./
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o requestcounter ./cmd/RequestCounter/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o requestcounter ./cmd/RequestCounter/*.go
 
 # Deploy
 FROM gcr.io/distroless/base-debian11
