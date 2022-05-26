@@ -2,6 +2,7 @@ package db_test
 
 import (
 	"fmt"
+	"sync"
 	"sync/atomic"
 	"testing"
 )
@@ -21,7 +22,7 @@ import (
 	I can also see it still being used in this way in nats.go. Please see:
 	https://github.com/nats-io/nats.go/blob/144a3b25a04c2dff2657c24b49652f9b1e652daf/nats.go#L3526
 
-	On my machine BenchmarkWithLen is about 10-12% faster than BenchmarkWithoutLen.
+	On my machine BenchmarkWithLen is faster than BenchmarkWithoutLen.
 	I believe this is due to an optimization where len(chan) is efficient because it does
 	not make use of synchronization, so in the case where the buffered chan is already filled,
 	we can skip the select with attempt chan send, which does make use of sync code.
@@ -30,26 +31,35 @@ import (
 	https://groups.google.com/g/golang-nuts/c/L0wIBDr3HCc
 */
 
+const workers = 10
+
 func BenchmarkWithLen(b *testing.B) {
 	var count, lastSaved, skipped uint64
 	flush := make(chan struct{}, 1)
+	var wg sync.WaitGroup
+	wg.Add(workers)
 
 	b.ReportAllocs()
 	fmt.Println()
 	b.ResetTimer()
 
 	go func() {
-		for i := 0; i < b.N; i++ {
-			atomic.AddUint64(&count, 1)
-
-			if len(flush) == 0 {
-				select {
-				case flush <- struct{}{}:
-				default:
+		for i := 0; i < workers; i++ {
+			go func() {
+				for i := 0; i < b.N; i++ {
+					atomic.AddUint64(&count, 1)
+					if len(flush) == 0 {
+						select {
+						case flush <- struct{}{}:
+						default:
+						}
+					}
 				}
-			}
+				wg.Done()
+			}()
 		}
 
+		wg.Wait()
 		close(flush)
 	}()
 
@@ -67,32 +77,40 @@ func BenchmarkWithLen(b *testing.B) {
 
 	b.StopTimer()
 
-	if lastSaved != uint64(b.N) {
-		b.Fatal(lastSaved, b.N)
+	total := uint64(b.N) * workers
+	if lastSaved != total {
+		b.Fatal(lastSaved, total)
 	}
 
-	per := float64(skipped*100) / float64(b.N)
-	fmt.Println("skipped", skipped, "saves out of", b.N, per, "%")
+	per := float64(skipped*100) / float64(total)
+	fmt.Println("skipped", skipped, "saves out of", total, per, "%")
 }
 
 func BenchmarkWithoutLen(b *testing.B) {
 	var count, lastSaved, skipped uint64
 	flush := make(chan struct{}, 1)
+	var wg sync.WaitGroup
+	wg.Add(workers)
 
 	b.ReportAllocs()
 	fmt.Println()
 	b.ResetTimer()
 
 	go func() {
-		for i := 0; i < b.N; i++ {
-			atomic.AddUint64(&count, 1)
-
-			select {
-			case flush <- struct{}{}:
-			default:
-			}
+		for i := 0; i < workers; i++ {
+			go func() {
+				for i := 0; i < b.N; i++ {
+					atomic.AddUint64(&count, 1)
+					select {
+					case flush <- struct{}{}:
+					default:
+					}
+				}
+				wg.Done()
+			}()
 		}
 
+		wg.Wait()
 		close(flush)
 	}()
 
@@ -110,10 +128,11 @@ func BenchmarkWithoutLen(b *testing.B) {
 
 	b.StopTimer()
 
-	if lastSaved != uint64(b.N) {
-		b.Fatal(lastSaved, b.N)
+	total := uint64(b.N) * workers
+	if lastSaved != total {
+		b.Fatal(lastSaved, total)
 	}
 
-	per := float64(skipped*100) / float64(b.N)
-	fmt.Println("skipped", skipped, "saves out of", b.N, per, "%")
+	per := float64(skipped*100) / float64(total)
+	fmt.Println("skipped", skipped, "saves out of", total, per, "%")
 }
