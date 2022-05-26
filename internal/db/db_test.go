@@ -34,6 +34,14 @@ import (
 const workers = 10
 
 func BenchmarkWithLen(b *testing.B) {
+	benchCountFlusher(b, true)
+}
+
+func BenchmarkWithoutLen(b *testing.B) {
+	benchCountFlusher(b, false)
+}
+
+func benchCountFlusher(b *testing.B, withLen bool) {
 	var count, lastSaved, skipped uint64
 	flush := make(chan struct{}, 1)
 	var wg sync.WaitGroup
@@ -48,62 +56,18 @@ func BenchmarkWithLen(b *testing.B) {
 			go func() {
 				for i := 0; i < b.N; i++ {
 					atomic.AddUint64(&count, 1)
-					if len(flush) == 0 {
+					if withLen {
+						if len(flush) == 0 {
+							select {
+							case flush <- struct{}{}:
+							default:
+							}
+						}
+					} else {
 						select {
 						case flush <- struct{}{}:
 						default:
 						}
-					}
-				}
-				wg.Done()
-			}()
-		}
-
-		wg.Wait()
-		close(flush)
-	}()
-
-	for range flush {
-		newCount := atomic.LoadUint64(&count)
-		if newCount < lastSaved {
-			b.Fatal(newCount)
-		}
-
-		if newCount > lastSaved {
-			skipped += newCount - lastSaved - 1
-		}
-		lastSaved = newCount
-	}
-
-	b.StopTimer()
-
-	total := uint64(b.N) * workers
-	if lastSaved != total {
-		b.Fatal(lastSaved, total)
-	}
-
-	per := float64(skipped*100) / float64(total)
-	fmt.Println("skipped", skipped, "saves out of", total, per, "%")
-}
-
-func BenchmarkWithoutLen(b *testing.B) {
-	var count, lastSaved, skipped uint64
-	flush := make(chan struct{}, 1)
-	var wg sync.WaitGroup
-	wg.Add(workers)
-
-	b.ReportAllocs()
-	fmt.Println()
-	b.ResetTimer()
-
-	go func() {
-		for i := 0; i < workers; i++ {
-			go func() {
-				for i := 0; i < b.N; i++ {
-					atomic.AddUint64(&count, 1)
-					select {
-					case flush <- struct{}{}:
-					default:
 					}
 				}
 				wg.Done()
