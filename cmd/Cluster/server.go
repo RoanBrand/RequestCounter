@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
+	"encoding/binary"
 	"log"
 	"net"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/RoanBrand/RequestCounter/internal/db"
@@ -67,8 +67,10 @@ func (s *Server) Close() error {
 
 func (s *Server) requestHandler(w http.ResponseWriter, r *http.Request) {
 	newCount := s.db.IncCount()
-	resp := []byte(strconv.FormatUint(newCount, 10))
+	resp := make([]byte, 8)
+	binary.LittleEndian.PutUint64(resp, newCount)
 
+	w.Header().Set("Content-Type", "application/octet-stream")
 	if _, err := w.Write(resp); err != nil {
 		log.Println("error", err)
 	}

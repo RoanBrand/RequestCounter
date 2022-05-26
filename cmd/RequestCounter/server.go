@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
+	"encoding/binary"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/RoanBrand/RequestCounter/internal/db"
@@ -137,10 +137,9 @@ func (s *Server) makeClusterRequest(ctx context.Context) (uint64, error) {
 		return 0, errors.WithStack(err)
 	}
 
-	bn, err := strconv.ParseUint(string(b), 10, 64)
-	if err != nil {
-		return 0, errors.WithStack(err)
+	if len(b) != 8 {
+		return 0, errors.New("cluster returned number wrong")
 	}
 
-	return bn, nil
+	return binary.LittleEndian.Uint64(b), nil
 }
