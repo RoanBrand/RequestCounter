@@ -110,8 +110,8 @@ func (s *Server) requestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// makeClusterRequest makea a request to cluster and
-// returns new count of total requests made to cluster.
+// makeClusterRequest makes a request to cluster and
+// returns new count of total requests made to it.
 func (s *Server) makeClusterRequest(ctx context.Context) (uint64, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()

@@ -1,10 +1,10 @@
 package db
 
 import (
+	"encoding/binary"
 	"io/fs"
 	"log"
 	"os"
-	"strconv"
 	"sync/atomic"
 
 	"github.com/pkg/errors"
@@ -66,8 +66,10 @@ func (d *DB) saveCount() error {
 		return nil
 	}
 
-	fb := strconv.FormatUint(c, 10)
-	err := os.WriteFile(d.file, []byte(fb), 0644)
+	fb := make([]byte, 8)
+	binary.LittleEndian.PutUint64(fb, c)
+
+	err := os.WriteFile(d.file, fb, 0644)
 	if err != nil {
 		return errors.Wrap(err, "unable to save "+d.file)
 	}
@@ -85,11 +87,11 @@ func (d *DB) loadCount() error {
 		return errors.Wrap(err, "unable to read "+d.file)
 	}
 
-	if len(fb) > 8 {
-		log.Println(d.file, d.file+" corrupted. Ignoring")
+	if len(fb) != 8 {
+		log.Println(d.file, "corrupted. Ignoring")
 		return nil
 	}
 
-	d.count, err = strconv.ParseUint(string(fb), 10, 64)
-	return err
+	d.count = binary.LittleEndian.Uint64(fb)
+	return nil
 }
