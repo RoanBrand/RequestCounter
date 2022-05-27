@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1-experimental
+# syntax=docker/dockerfile:1.3
 
 # Build
 FROM registry.semaphoreci.com/golang:1.18 as builder

@@ -1,11 +1,16 @@
+# Force to use buildkit for all images and for docker-compose to invoke
+# Docker via CLI (otherwise buildkit isn't used for those images)
+export DOCKER_BUILDKIT=1
+export COMPOSE_DOCKER_CLI_BUILD=1
+
 build:
-	sudo docker compose build
+	docker compose build
 
 run:
-	sudo docker compose up
+	docker compose up
 
 rebuild-run:
-	sudo docker compose up --build
+	docker compose up --build
 
 bench:
 	go test -race -bench=. ./...
