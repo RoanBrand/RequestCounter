@@ -12,5 +12,8 @@ run:
 rebuild-run:
 	docker compose up --build
 
+test:
+	go test -race ./cmd/Cluster/...
+
 bench:
-	go test -race -bench=. ./...
+	go test -race -bench=. ./internal/db/...
